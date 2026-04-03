@@ -1,0 +1,39 @@
+# memory-core/requirements.txt
+# Python dependencies for the MCaaS container
+
+# ── Core async web framework ─────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+websockets>=12.0
+
+# ── Database ─────────────────────────────────────────────────────────────────
+asyncpg>=0.29.0          # PostgreSQL async driver with pgvector codec
+
+# ── Redis ─────────────────────────────────────────────────────────────────────
+redis[asyncio]>=5.0.0    # Redis async client for event queue
+
+# ── HTTP client ───────────────────────────────────────────────────────────────
+httpx>=0.27.0            # Ollama embedding API calls
+
+# ── Anthropic SDK ─────────────────────────────────────────────────────────────
+anthropic>=0.30.0        # Eidos, Psyche, Oneiros, dialectical synthesis
+
+# ── Config ────────────────────────────────────────────────────────────────────
+pyyaml>=6.0.1
+
+# ── Data validation ───────────────────────────────────────────────────────────
+pydantic>=2.7.0
+
+# ── Numerical (centroid computation, cosine similarity) ───────────────────────
+numpy>=1.26.0
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest>=8.2.0
+pytest-asyncio>=0.23.0
+pytest-mock>=3.14.0
+httpx>=0.27.0            # for TestClient
+
+# ── Optional (uncomment for Phase 9 ML models) ───────────────────────────────
+# tensorflow>=2.16.0
+# scikit-learn>=1.5.0    # HDBSCAN fallback clustering
+# hdbscan>=0.8.38        # Production-quality topic clustering

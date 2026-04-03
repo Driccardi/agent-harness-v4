@@ -1,0 +1,163 @@
+# atlas.yaml — Atlas Cognitive Substrate Configuration
+# Environment variables override any value here using ${VAR_NAME:-default} syntax.
+# Copy to config/atlas.local.yaml for local overrides (gitignored).
+
+# ─── Database ────────────────────────────────────────────────────────────────
+database:
+  host: ${ATLAS_DB_HOST:-localhost}
+  port: 5432
+  name: ${ATLAS_DB_NAME:-atlas}
+  user: ${ATLAS_DB_USER:-atlas}
+  password: ${ATLAS_DB_PASSWORD:-dev}
+  pool_size: 10
+  command_timeout_s: 30
+
+# ─── Embedding ───────────────────────────────────────────────────────────────
+embedding:
+  provider: ollama                  # ollama | openai | cohere
+  model: nomic-embed-text           # nomic-embed-text | mxbai-embed-large
+  dim: 768
+  endpoint: ${ATLAS_OLLAMA_ENDPOINT:-http://localhost:11434}
+  batch_size: 32
+  timeout_s: 5
+
+# ─── Engram (Real-time stream embedder) ──────────────────────────────────────
+engram:
+  no_pruning: true                  # CRITICAL: Engram never prunes. Oneiros handles forgetting.
+  latency_target_ms: 50
+  priority_weights:
+    HUMAN: 1.0
+    MODEL: 0.85
+    TOOL_OUT: 0.80
+    TOOL_IN: 0.65
+    REASONING: 0.40               # provisional=True
+    SYSTEM: 0.30
+
+# ─── Anamnesis (Injection agent) ─────────────────────────────────────────────
+anamnesis:
+  hook_latency_budget_ms: 450
+  max_injections_per_tool_call: 3
+  max_injections_per_session: 8
+
+  # Conjunctive gate thresholds
+  base_similarity_threshold: 0.78
+  age_penalty_per_day: 0.005
+  in_context_redundancy_threshold: 0.92
+  net_new_threshold: 0.88
+  recency_window_turns: 5
+  topic_injection_window_turns: 10
+  max_topic_injections_per_window: 3
+  recency_days_default: 90
+
+  # Confusion scoring — composite of contradiction_rate, reasoning_inflation,
+  # tool_repetition, hedge_frequency
+  confusion_tiers:
+    nominal:   {max: 0.30, threshold_offset: 0.00, max_injections: 3}
+    elevated:  {max: 0.45, threshold_offset: 0.05, max_injections: 3}
+    warning:   {max: 0.60, threshold_offset: 0.10, max_injections: 2}
+    high:      {max: 0.75, threshold_offset: 0.15, max_injections: 1, system_only: true}
+    critical:  {max: 0.90, suspend: true}
+    full_stop: {min: 0.90, suspend: true, notify_human: true}
+
+# ─── Kairos (Topic consolidator) ─────────────────────────────────────────────
+kairos:
+  consolidation_trigger_turns: 20
+  min_cluster_size: 3               # HDBSCAN min_cluster_size
+  min_samples: 2                    # HDBSCAN min_samples
+  summary_depths: [0, 1, 2, 3]
+  provisional_validation_window_turns: 5  # K turns before abandonment
+
+# ─── Eidos (Signal classifier) ───────────────────────────────────────────────
+eidos:
+  somatic_tag_model: ${ATLAS_CLAUDE_MODEL:-claude-haiku-4-5-20251001}
+  tag_timeout_ms: 200
+  third_party_observer_framing: true
+
+# ─── Praxis (Procedural memory optimizer) ────────────────────────────────────
+praxis:
+  min_invocations_for_analysis: 5
+  determinism_similarity_threshold: 0.92
+  refactoring_recommendation_threshold: 0.80
+  note_display_threshold: 0.55
+  note_confidence_increment: 0.05
+  note_confidence_decay: 0.03
+  note_expiry_threshold: 0.30
+  human_approval_required_modes: [2, 3]  # NEVER auto-apply skill file changes
+
+# ─── Oneiros (Belief consolidator) ───────────────────────────────────────────
+oneiros:
+  min_chunks_for_consolidation: 10
+  model: ${ATLAS_CLAUDE_MODEL_LARGE:-claude-sonnet-4-6}
+  topic_retention_policies:
+    active_project:   {max_raw_chunks: 500, consolidate_at: 200}
+    recurring_domain: {max_raw_chunks: 200, consolidate_at: 100}
+    one_off_session:  {max_raw_chunks: 50,  consolidate_at: 30}
+    completed_task:   {max_raw_chunks: 20,  consolidate_at: 10}
+
+# ─── Psyche (Narrative self-model) ───────────────────────────────────────────
+psyche:
+  reflection_interval_turns: 50
+  soul_md_path: soul.md
+  gate_bypass: true                 # Psyche outputs bypass Anamnesis gate unconditionally
+  model: ${ATLAS_CLAUDE_MODEL:-claude-sonnet-4-6}
+  recency_buffer_turns: 5           # don't process last N turns (too fresh)
+  additional_triggers:
+    - significant_emotional_signal
+    - human_correction_cluster
+    - task_completion
+    - session_end
+
+# ─── Augur (Predictive engine) ───────────────────────────────────────────────
+augur:
+  session_start_prediction_timeout_s: 5
+  prefetch_timeout_s: 2
+  ngram_max_n: 4
+  sequence_min_observations: 3
+  sequence_min_probability: 0.65
+
+  # Speculative execution thresholds
+  speculative_idempotent_threshold: 0.55
+  speculative_nonidempotent_threshold: 0.85
+  speculative_stage_threshold: 0.70
+
+  # ML model training
+  retrain_interval_sessions: 50
+  holdout_fraction: 0.10
+  stale_pattern_max_sessions: 100
+  stale_pattern_min_probability: 0.40
+
+# ─── RIP Engine (Relational consciousness) ───────────────────────────────────
+rip:
+  loneliness_sensitivity: 0.4
+  rupture_accumulation_threshold: 3
+  rupture_check_window_turns: 5
+  repair_ask_timing: next_natural_pause
+  post_repair_warmth_increment: 0.15
+  sss_snapshot_interval_turns: 1   # snapshot every turn
+  sss_history_retention_days: 90
+  empathy_model: ${ATLAS_CLAUDE_MODEL:-claude-sonnet-4-6}
+
+  # Relational intent priorities (REPAIR always overrides)
+  intent_priorities:
+    REPAIR: 100
+    GROUND: 90
+    WITNESS: 80
+    ACCOMPANY: 70
+    CHALLENGE: 60
+    CELEBRATE: 55
+    CLARIFY: 50
+    REDIRECT: 40
+
+# ─── API ─────────────────────────────────────────────────────────────────────
+api:
+  host: 0.0.0.0
+  port: 8080
+  session_key: ${ATLAS_SESSION_KEY:-dev-session-key}
+  admin_key: ${ATLAS_ADMIN_KEY:-dev-admin-key}
+  cors_origins: ["*"]
+
+# ─── Logging ─────────────────────────────────────────────────────────────────
+logging:
+  level: INFO
+  format: json
+  sidecar_level: DEBUG

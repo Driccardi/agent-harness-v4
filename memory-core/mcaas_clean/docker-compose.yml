@@ -1,0 +1,89 @@
+version: "3.9"
+
+# Memory-Core as a Service — Host-side compose file
+# The container handles ALL internal services (postgres, redis, ollama, sidecars).
+# Only port 4200 (the API) is exposed to the host.
+
+services:
+  memory-core:
+    image: memory-core:latest
+    # OR: ghcr.io/your-org/memory-core:latest
+    container_name: memory-core
+    restart: unless-stopped
+
+    ports:
+      - "${MC_HOST_PORT:-4200}:4200"    # API only
+
+    volumes:
+      # Persistent data (survives container restarts and upgrades)
+      - mc_postgres:/data/postgres
+      - mc_ollama:/data/ollama
+
+      # soul.md is accessible from the host for human editing
+      - ./soul.md:/data/soul/soul.md
+
+      # Config override (optional — container uses defaults if not mounted)
+      - ./config/atlas.yaml:/data/config/atlas.yaml:ro
+
+    environment:
+      # Required
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
+      # Auth keys (change from defaults in production)
+      MC_SESSION_KEY: ${MC_SESSION_KEY:-changeme-session}
+      MC_ADMIN_KEY: ${MC_ADMIN_KEY:-changeme-admin}
+      MC_DB_PASSWORD: ${MC_DB_PASSWORD:-dev}
+
+      # Default human_id for single-user deployments
+      MC_DEFAULT_HUMAN_ID: ${MC_HUMAN_ID:-default}
+
+      # Embedding model (nomic-embed-text is default, mxbai-embed-large for higher quality)
+      MC_EMBEDDING_MODEL: ${MC_EMBEDDING_MODEL:-nomic-embed-text}
+
+      # Optional: use external Claude API for sidecars (Eidos, Psyche, Oneiros)
+      # If not set, uses the ANTHROPIC_API_KEY above
+      # MC_SIDECAR_MODEL: claude-haiku-4-5-20251001
+
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:4200/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    # Resource limits (adjust for your hardware)
+    # For GPU support, add: deploy.resources.reservations.devices
+    # mem_limit: 4g
+    # cpus: "2.0"
+
+volumes:
+  mc_postgres:
+    driver: local
+  mc_ollama:
+    driver: local
+
+# ── Usage ─────────────────────────────────────────────────────────────────────
+#
+# First run:
+#   cp .env.example .env
+#   edit .env with your keys
+#   touch soul.md
+#   docker-compose up -d
+#
+# Check health:
+#   curl http://localhost:4200/health
+#
+# View logs:
+#   docker logs memory-core -f
+#
+# Inspect specific service logs:
+#   docker exec memory-core supervisorctl tail -f api
+#   docker exec memory-core supervisorctl tail -f engram-worker
+#
+# Export state:
+#   curl -H "X-MC-Key: $MC_ADMIN_KEY" -H "X-MC-Human-ID: default" \
+#        http://localhost:4200/v1/export/default > memory_backup.json
+#
+# Upgrade (preserves all state):
+#   docker pull memory-core:new-version
+#   docker-compose up -d    # volumes persist automatically

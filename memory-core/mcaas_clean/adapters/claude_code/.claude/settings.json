@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "python hooks/session_start.py",
+        "timeout": 8000
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "python hooks/user_prompt_submit.py",
+        "timeout": 500
+      }
+    ],
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "python hooks/pre_tool_use.py",
+        "timeout": 500
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "python hooks/post_tool_use.py",
+        "timeout": 300
+      }
+    ],
+    "PreCompact": [
+      {
+        "type": "command",
+        "command": "python hooks/pre_compact.py",
+        "timeout": 5000
+      }
+    ],
+    "SessionEnd": [
+      {
+        "type": "command",
+        "command": "python hooks/session_end.py",
+        "timeout": 10000
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(python hooks/*)",
+      "Bash(mc *)",
+      "Read(soul.md)"
+    ]
+  }
+}

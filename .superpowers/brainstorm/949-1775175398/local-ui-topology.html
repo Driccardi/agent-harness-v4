@@ -1,0 +1,69 @@
+<h2>First question: Local UI — how does it live on your machine?</h2>
+<p class="subtitle">This is the most foundational frontend decision. It affects packaging, hotkeys, window management, tray icons, and how updates work.</p>
+
+<div class="options">
+  <div class="option" data-choice="electron" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Electron desktop app</h3>
+      <p>A native desktop window — installed like any app. Can register global hotkeys, live in the system tray, show native notifications, manage multiple windows. The Vite frontend compiles to a bundle loaded inside Electron. No browser needed.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>True desktop app feel — tray, hotkeys, native popups</li>
+          <li>No port conflicts or browser juggling</li>
+          <li>Can control window position/size programmatically</li>
+          <li>IPC channel to FastAPI backend</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Heavier packaging (~150MB baseline)</li>
+          <li>Separate local vs remote build targets</li>
+          <li>Auto-update infrastructure needed</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="browser" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Browser-served web app (localhost)</h3>
+      <p>Vite app served from a local webserver (Nginx or Node). Open http://localhost:PORT in any browser. Remote version is the same codebase deployed to a server. The "local" and "remote" builds are identical — just different host targets.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Single codebase — local and remote are identical</li>
+          <li>No packaging — just a running service</li>
+          <li>DevTools always available</li>
+          <li>Easier to update (just rebuild/restart)</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Global hotkeys need a separate daemon (Python-side)</li>
+          <li>Window management via browser APIs only</li>
+          <li>Popups are browser popups, not native windows</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="tauri" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Tauri desktop app</h3>
+      <p>Like Electron but using Rust + the OS's native webview instead of Chromium. Much smaller binary (~5MB). Same Vite frontend compiles directly. Still a true desktop app with tray, hotkeys, and native windows — just lighter.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Tiny binary — no Chromium bundled</li>
+          <li>Same native desktop capabilities as Electron</li>
+          <li>Vite frontend works unchanged</li>
+          <li>Strong security model</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Requires Rust toolchain for builds</li>
+          <li>Less ecosystem maturity than Electron</li>
+          <li>WebView rendering can differ across OS versions</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:2rem">This also affects what "remote version" means — click your preferred approach, then let me know in the terminal.</p>
